@@ -6,8 +6,6 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [blogs, setBlogs] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [newBlogTitle, setNewBlogTitle] = useState('');
-  const [newBlogContent, setNewBlogContent] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
   const [showNotification, setShowNotification] = useState(false);
 
@@ -21,6 +19,8 @@ const App = () => {
       } catch (error) {
         console.error(error);
         setErrorMessage('Error fetching blogs');
+        setNotificationMessage('Virhe haettaessa blogeja!');
+        setShowNotification(true);
       }
     };
 
@@ -49,10 +49,14 @@ const App = () => {
       setUser(data.user); // Store user data (including token) in state
       localStorage.setItem('user', JSON.stringify(data.user)); // Store user data in local storage
       setErrorMessage(null);
+      setNotificationMessage('Kirjauduttu sisään onnistuneesti!');
+      setShowNotification(true);
       toast('Kirjauduttu sisään onnistuneesti!', { type: 'success' });
     } catch (error) {
       console.error(error);
       setErrorMessage('Login failed. Please check your credentials.');
+      setNotificationMessage('Kirjautuminen epäonnistui!');
+      setShowNotification(true);
       toast('Kirjautuminen epäonnistui!', { type: 'error' });
     }
   };
@@ -61,6 +65,8 @@ const App = () => {
     setUser(null);
     localStorage.removeItem('user');
     // Redirect to login page or other relevant route (optional)
+    setNotificationMessage('Uloskirjauduttu onnistuneesti!');
+    setShowNotification(true);
     toast('Uloskirjauduttu onnistuneesti!', { type: 'success' });
   };
 
@@ -76,44 +82,51 @@ const App = () => {
     setUser(null);
   }, []); // Empty dependency array to run only once on mount
 
-  const handleCreateBlog = async (event) => {
-    event.preventDefault();
+  return (
+    <div className="App">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000} // Hide after 3 seconds
+        hideProgressBar={true}
+        pauseOnHover={false}
+      />
+      {user === null ? (
+        <div className="login-form">
+          <h2>Kirjaudu sisään</h2>
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
+          <form onSubmit={handleLogin}>
+            <label htmlFor="username">Käyttäjätunnus:</label>
+            <input type="text" id="username" name="username" required />
+            <label htmlFor="password">Salasana:</label>
+            <input type="password" id="password" name="password" required />
+            <button type="submit">Kirjaudu sisään</button>
+          </form>
+        </div>
+      ) : (
+        <div className="logged-in-view">
+          <h2>Hei, {user.name}!</h2>
+          {blogs.length > 0 ? (
+            <ul>
+              {blogs.map((blog) => (
+                <li key={blog.id}>... (code continues from previous section)
+                <h3>{blog.title}</h3>
+                <p>{blog.content}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Ei blogeja!</p>
+        )}
+        <button onClick={handleLogout}>Kirjaudu ulos</button>
+      </div>
+    )}
+    {showNotification && (
+      <div className="notification">
+        <p>{notificationMessage}</p>
+      </div>
+    )}
+  </div>
+);
+};
 
-    const title = newBlogTitle;
-    const content = newBlogContent;
-
-    try {
-      const response = await fetch('/api/blogs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.token}`, // Include user's token
-        },
-        body: JSON.stringify({ title, content }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Blog creation failed with status ${response.status}`);
-      }
-
-      const newBlog = await response.json();
-      setBlogs([...blogs, newBlog]); // Update blogs state with new blog
-      setNewBlogTitle(''); // Clear form fields after successful creation
-      setNewBlogContent('');
-      setNotificationMessage('Blogi lisätty onnistuneesti!');
-      setShowNotification(true);
-    } catch (error) {
-      console.error(error);
-      setNotificationMessage('Blogin luominen epäonnistui!');
-      setShowNotification(true);
-    }
-  };
-
-  const handleNewBlogTitleChange = (event) => {
-    setNewBlogTitle(event.target.value);
-  };
-
-  const handleNewBlogContentChange = (event) => {
-    setNewBlogContent(event.target.value);
-  };
-}
+export default App;
