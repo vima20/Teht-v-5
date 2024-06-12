@@ -129,11 +129,36 @@ describe('Note app', () => {
             const newBlogTitle = await page.locator('.blog-list-item h2');
             expect(newBlogTitle).toBeVisible();
             expect(newBlogTitle).toHaveTextContent('My New Blog Post');
+            test('a blog can be liked', async ({ page }) => {
+                // Create a blog post
+                await page.goto('http://localhost:5173/blogs/new');
+                // ... (Fill in blog details and create)
+          
+                // Navigate to the blog list page
+                await page.goto('http://localhost:5173/blogs');
+          
+                // Find the newly created blog
+                const newBlogTitle = await page.locator('.blog-list-item h2');
+                expect(newBlogTitle).toBeVisible();
+                expect(newBlogTitle).toHaveTextContent('My New Blog Post');
+          
+                // Click the like button for the blog
+                const likeButton = newBlogTitle.locator('button[aria-label="Like this blog"]');
+                await likeButton.click();
+          
+                // Check if the like button is updated to reflect the liked state
+                expect(likeButton).toHaveTextContent('Unlike');
+          
+                // Check if the like count is updated
+                const likeCount = newBlogTitle.locator('.like-count');
+                expect(likeCount).toBeVisible();
+                expect(likeCount).toHaveTextContent('1');
+              });
+            });
+          });
           });
         });
       });
     });
   });
-});
-});
 });
